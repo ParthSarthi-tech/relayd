@@ -8,7 +8,6 @@ on:
 
 env:
   NODE_VERSION: '22'
-  PNPM_VERSION: '11'
   DATABASE_URL: postgres://relay:relay@localhost:5432/relay_test
   REDIS_URL: redis://localhost:6379
   JWT_SECRET: ci-test-secret-that-is-at-least-32-chars-long
@@ -45,8 +44,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
