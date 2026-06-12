@@ -175,8 +175,8 @@ describe('POST /v1/events', () => {
     db._selectResults.mockResolvedValueOnce([activeEndpoint])
 
     const queues = createMockQueues()
-    // Return high count for ALL incr calls (tenant middleware + 2 endpoint checks)
-    queues.connection.incr.mockResolvedValue(999)
+    // Return high count for ALL eval calls (tenant middleware + 2 endpoint checks)
+    queues.connection.eval.mockResolvedValue(999)
 
     const app = createApp({ db, queues, log: createMockLogger() })
 

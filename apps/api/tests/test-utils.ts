@@ -39,6 +39,7 @@ export function createMockConnection() {
     del: vi.fn().mockResolvedValue(1),
     get: vi.fn().mockResolvedValue(null),
     ping: vi.fn().mockResolvedValue('PONG'),
+    eval: vi.fn().mockResolvedValue(1),
     quit: vi.fn().mockResolvedValue(undefined),
     status: 'ready',
   }
