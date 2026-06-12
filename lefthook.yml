@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,tsx,js,json}"
+      run: pnpm biome check --no-errors-on-unmatched --write {staged_files}
+      stage_fixed: true
+    typecheck:
+      run: pnpm typecheck
+
+commit-msg:
+  commands:
+    conventional:
+      run: npx --no-install commitlint --edit {1}
+      skip_if: |
+        echo "Skipping commitlint (not configured)"

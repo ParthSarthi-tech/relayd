@@ -1,0 +1,33 @@
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY packages/config/package.json packages/config/
+COPY packages/db/package.json packages/db/
+COPY apps/api/package.json apps/api/
+COPY apps/worker/package.json apps/worker/
+RUN pnpm install --frozen-lockfile
+
+COPY packages/config/src packages/config/src
+COPY packages/db/src packages/db/src
+COPY apps/api/src apps/api/src
+COPY apps/worker/src apps/worker/src
+
+RUN pnpm build --filter @relay/api --filter @relay/worker
+
+# --- API ---
+FROM node:22-alpine AS api
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+COPY --from=base /app .
+EXPOSE 3000
+CMD ["node", "--enable-source-maps", "apps/api/dist/index.js"]
+
+# --- Worker ---
+FROM node:22-alpine AS worker
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+COPY --from=base /app .
+EXPOSE 3002
+CMD ["node", "--enable-source-maps", "apps/worker/dist/index.js"]

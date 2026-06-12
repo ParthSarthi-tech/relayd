@@ -1,0 +1,1 @@
+ALTER TABLE "endpoints" ADD COLUMN "dead_letter_webhook_url" text;

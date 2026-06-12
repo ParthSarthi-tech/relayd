@@ -1,0 +1,10 @@
+node_modules
+dist
+.turbo
+coverage
+.git
+.env
+*.md
+session-*
+k6
+docker
