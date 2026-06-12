@@ -1,26 +1,33 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Copy, Shield } from 'lucide-react'
+import { ArrowLeft, BarChart3, Check, Copy, Fingerprint, Key, Lock, RefreshCw, ScrollText, Shield, Tag, Timer } from 'lucide-react'
 import { useState } from 'react'
 
 type Lang = 'curl' | 'node' | 'python'
 
-function CopyButton({ text }: { text: string }) {
+function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false)
   return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
-      className="absolute right-2 top-2 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-    >
-      {copied ? 'Copied!' : 'Copy'}
-    </button>
-  )
-}
-
-function CodeBlock({ code }: { code: string }) {
-  return (
-    <div className="relative">
-      <CopyButton text={code} />
-      <pre className="rounded-md bg-muted p-3 pt-7 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap">
+    <div className="relative rounded-lg overflow-hidden border border-border">
+      <div className="flex items-center justify-between bg-muted/80 px-3 py-1.5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+          </div>
+        </div>
+        <button
+          onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-emerald-500" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+        </button>
+      </div>
+      <pre className="bg-muted/30 p-4 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed">
         {code}
       </pre>
     </div>
@@ -34,15 +41,15 @@ function TabBar({ selected, onSelect }: { selected: Lang; onSelect: (l: Lang) =>
     { value: 'python', label: 'Python' },
   ]
   return (
-    <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit mb-4">
+    <div className="flex gap-1 rounded-lg bg-muted p-0.5 w-fit border border-border">
       {tabs.map((t) => (
         <button
           key={t.value}
           onClick={() => onSelect(t.value)}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
             selected === t.value
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-card text-foreground shadow-sm border border-border'
+              : 'text-muted-foreground hover:text-foreground border border-transparent'
           }`}
         >
           {t.label}
@@ -182,118 +189,158 @@ export function VerifyPage() {
   const [lang, setLang] = useState<Lang>('node')
 
   return (
-    <div className="mx-auto w-full max-w-[900px] px-4 py-6 md:px-6">
+    <div className="w-full px-4 py-6 md:px-6 lg:px-8">
+      {/* Back button */}
       <button
         onClick={() => navigate({ to: '/integration' })}
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
+        className="group inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-all mb-6"
       >
-        <ArrowLeft className="h-3 w-3" />
+        <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
         Back to Integration Guide
       </button>
 
-      <div className="flex items-center gap-2 mb-6">
-        <Shield className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-xl font-semibold text-foreground">Verifying Webhooks</h1>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20">
+          <Shield className="h-5 w-5 text-amber-500" />
+        </div>
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Verifying Webhooks</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            HMAC-SHA256 signature verification for your customers
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-2">How It Works</h2>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Every webhook payload is signed with <strong className="text-foreground">HMAC-SHA256</strong>{' '}
-            using your endpoint's signing secret. The signature is sent in the{' '}
-            <code className="text-foreground font-mono text-[11px]">x-relay-signature</code> header
-            in the format <code className="text-foreground font-mono text-[11px]">t=&lt;timestamp&gt;,v1=&lt;hex&gt;</code>.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed mt-2">
-            You should verify this signature on every webhook request to confirm it was sent by
-            Relay and has not been tampered with. The <code className="text-foreground font-mono text-[11px]">t</code>{' '}
-            parameter provides replay protection — reject signatures older than your tolerance
-            window (default 5 minutes).
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-foreground">Verification Code</h2>
-            <TabBar selected={lang} onSelect={setLang} />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+        {/* Main content */}
+        <div className="space-y-8">
+          {/* How it works */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/20 via-amber-500/40 to-amber-500/20" />
+            <div className="p-6">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                  <Fingerprint className="h-4 w-4 text-amber-500" />
+                </div>
+                <h2 className="text-base font-semibold text-foreground">How It Works</h2>
+              </div>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Every webhook payload is signed with <strong className="text-foreground">HMAC-SHA256</strong>{' '}
+                  using your endpoint's signing secret before delivery. The signature is sent in the{' '}
+                  <code className="text-foreground font-mono text-xs px-1 py-0.5 rounded bg-muted">x-relay-signature</code>{' '}
+                  header in the format <code className="text-foreground font-mono text-xs px-1 py-0.5 rounded bg-muted">t=&lt;timestamp&gt;,v1=&lt;hex&gt;</code>.
+                </p>
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <strong className="text-foreground">You should verify this signature</strong> on every webhook
+                    request to confirm it was sent by Relayd and has not been tampered with. The{' '}
+                    <code className="text-foreground font-mono text-[11px]">t</code> parameter provides
+                    replay protection — reject signatures older than your tolerance window (default 5 minutes).
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <CodeBlock code={verifySnippet(lang)} />
-        </div>
 
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Headers Reference</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left font-medium text-muted-foreground py-2 pr-4">Header</th>
-                  <th className="text-left font-medium text-muted-foreground py-2 pr-4">Description</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                <tr>
-                  <td className="py-2 pr-4 font-mono text-foreground">x-relay-signature</td>
-                  <td className="py-2 text-muted-foreground">
-                    HMAC-SHA256 signature: <code className="text-foreground font-mono text-[11px]">t=&lbrace;timestamp&rbrace;,v1=&lbrace;hex&rbrace;</code>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-2 pr-4 font-mono text-foreground">x-relay-message-id</td>
-                  <td className="py-2 text-muted-foreground">Unique ID for this delivery attempt</td>
-                </tr>
-                <tr>
-                  <td className="py-2 pr-4 font-mono text-foreground">x-relay-event-id</td>
-                  <td className="py-2 text-muted-foreground">
-                    Your idempotency key — use for deduplication
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-2 pr-4 font-mono text-foreground">x-relay-event-type</td>
-                  <td className="py-2 text-muted-foreground">The event type (e.g. user.created)</td>
-                </tr>
-                <tr>
-                  <td className="py-2 pr-4 font-mono text-foreground">x-relay-attempt</td>
-                  <td className="py-2 text-muted-foreground">Which attempt this is (1, 2, 3)</td>
-                </tr>
-              </tbody>
-            </table>
+          {/* Verification Code */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+                    <ScrollText className="h-4 w-4 text-foreground" />
+                  </div>
+                  <h2 className="text-base font-semibold text-foreground">Verification Code</h2>
+                </div>
+                <TabBar selected={lang} onSelect={setLang} />
+              </div>
+              <CodeBlock code={verifySnippet(lang)} />
+            </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Best Practices</h2>
-          <div className="space-y-3 text-xs text-muted-foreground">
-            <div className="flex items-start gap-2">
-              <span className="text-foreground font-semibold shrink-0 w-24">Verify always</span>
-              <span>
-                Always verify the signature before processing. Without verification, anyone can send
-                fake webhooks to your endpoint.
-              </span>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Headers Reference */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-4">Headers Reference</h2>
+              <div className="space-y-0 divide-y divide-border">
+                {[
+                  { header: 'x-relay-signature', icon: Shield, desc: 'HMAC-SHA256: t={ts},v1={hex}', color: 'text-amber-500' },
+                  { header: 'x-relay-message-id', icon: Fingerprint, desc: 'Unique delivery attempt ID', color: 'text-foreground' },
+                  { header: 'x-relay-event-id', icon: Key, desc: 'Your idempotency key for dedup', color: 'text-foreground' },
+                  { header: 'x-relay-event-type', icon: Tag, desc: 'Event type (e.g. user.created)', color: 'text-foreground' },
+                  { header: 'x-relay-attempt', icon: BarChart3, desc: 'Attempt number (1, 2, 3...)', color: 'text-foreground' },
+                ].map(({ header, icon: Icon, desc, color }) => (
+                  <div key={header} className="py-2.5 first:pt-0 last:pb-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Icon className={`h-3 w-3 ${color}`} />
+                      <code className="text-xs font-mono text-foreground">{header}</code>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground pl-5">{desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-start gap-2">
-              <span className="text-foreground font-semibold shrink-0 w-24">Use timestamps</span>
-              <span>
-                Enforce a tolerance window (5 minutes recommended) on the{' '}
-                <code className="text-foreground font-mono text-[11px]">t</code> parameter to prevent
-                replay attacks.
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-foreground font-semibold shrink-0 w-24">Constant time</span>
-              <span>
-                Use constant-time comparison (like Node's{' '}
-                <code className="text-foreground font-mono text-[11px]">timingSafeEqual</code> or
-                Python's <code className="text-foreground font-mono text-[11px]">compare_digest</code>)
-                to avoid timing side-channel attacks.
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-foreground font-semibold shrink-0 w-24">Rotate secrets</span>
-              <span>
-                Rotate your signing secret periodically using the Keys section on your endpoint page.
-                Old keys remain valid for in-flight deliveries.
-              </span>
+          </div>
+
+          {/* Best Practices */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/20 via-emerald-500/40 to-emerald-500/20" />
+            <div className="p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-4">Best Practices</h2>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 mt-0.5">
+                    <Check className="h-3 w-3 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Verify always</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                      Always verify the signature before processing. Without it, anyone can send fake webhooks.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 mt-0.5">
+                    <Timer className="h-3 w-3 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Use timestamps</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                      Enforce a tolerance window (5 minutes) on <code className="text-foreground font-mono text-[10px]">t</code> to prevent replay attacks.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 mt-0.5">
+                    <Lock className="h-3 w-3 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Constant time</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                      Use <code className="text-foreground font-mono text-[10px]">timingSafeEqual</code> or{' '}
+                      <code className="text-foreground font-mono text-[10px]">compare_digest</code> to avoid timing attacks.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 mt-0.5">
+                    <RefreshCw className="h-3 w-3 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Rotate secrets</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+                      Rotate signing secrets periodically. Old keys remain valid for in-flight deliveries.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -301,3 +348,4 @@ export function VerifyPage() {
     </div>
   )
 }
+

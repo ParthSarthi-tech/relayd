@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { BookOpen, ChevronRight, Copy, FileCode, Key, Shield } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, ChevronRight, Copy, FileCode, Key, RefreshCw, Shield, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, getApiBaseUrl } from '../../lib/api-client'
 import { getStoredTenant, getStoredUser } from '../../lib/auth'
@@ -9,28 +9,51 @@ type Lang = 'curl' | 'node' | 'python'
 
 const apiUrl = getApiBaseUrl()
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, className = '' }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
-      className="absolute right-2 top-2 rounded-md border border-border bg-card px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+      className={`text-muted-foreground hover:text-foreground transition-colors ${className}`}
     >
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? (
+        <Check className="h-3.5 w-3.5 text-emerald-500" />
+      ) : (
+        <Copy className="h-3.5 w-3.5" />
+      )}
     </button>
   )
 }
 
 function CodeBlock({ code, lang }: { code: string; lang?: string }) {
+  const [copied, setCopied] = useState(false)
   return (
-    <div className="relative">
-      {lang && (
-        <span className="absolute left-2 top-2 text-[10px] font-mono font-medium text-muted-foreground uppercase">
-          {lang}
-        </span>
-      )}
-      <CopyButton text={code} />
-      <pre className="mt-0 rounded-md bg-muted p-3 pt-7 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap">
+    <div className="relative rounded-lg overflow-hidden border border-border">
+      <div className="flex items-center justify-between bg-muted/80 px-3 py-1.5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+          </div>
+          {lang && (
+            <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider ml-2">
+              {lang}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-emerald-500" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+        </button>
+      </div>
+      <pre className="bg-muted/30 p-4 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed">
         {code}
       </pre>
     </div>
@@ -44,15 +67,15 @@ function TabBar({ selected, onSelect }: { selected: Lang; onSelect: (l: Lang) =>
     { value: 'python', label: 'Python' },
   ]
   return (
-    <div className="flex gap-1 rounded-lg bg-muted p-1 w-fit mb-4">
+    <div className="flex gap-1 rounded-lg bg-muted p-0.5 w-fit border border-border">
       {tabs.map((t) => (
         <button
           key={t.value}
           onClick={() => onSelect(t.value)}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
             selected === t.value
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-card text-foreground shadow-sm border border-border'
+              : 'text-muted-foreground hover:text-foreground border border-transparent'
           }`}
         >
           {t.label}
@@ -62,24 +85,27 @@ function TabBar({ selected, onSelect }: { selected: Lang; onSelect: (l: Lang) =>
   )
 }
 
-function createEndpointSnippet(lang: Lang, key: string): { label: string; code: string } {
+function StepNumber({ n }: { n: number }) {
+  return (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-[11px] font-bold text-foreground">
+      {n}
+    </span>
+  )
+}
+
+function createEndpointSnippet(lang: Lang, key: string): string {
   switch (lang) {
     case 'curl':
-      return {
-        label: 'Create an endpoint',
-        code: `curl -X POST ${apiUrl}/v1/endpoints \\
+      return `curl -X POST ${apiUrl}/v1/endpoints \\
   -H "Authorization: Bearer ${key}" \\
   -H "Content-Type: application/json" \\
   -d '{
     "url": "https://your-app.com/webhooks/relay",
     "description": "Production webhook",
     "eventTypes": ["*"]
-  }'`,
-      }
+  }'`
     case 'node':
-      return {
-        label: 'Create an endpoint',
-        code: `const response = await fetch('${apiUrl}/v1/endpoints', {
+      return `const response = await fetch('${apiUrl}/v1/endpoints', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer ${key}',
@@ -92,12 +118,9 @@ function createEndpointSnippet(lang: Lang, key: string): { label: string; code: 
   }),
 })
 const endpoint = await response.json()
-// Save endpoint.id — you'll need it to send events`,
-      }
+// Save endpoint.id — you'll need it to send events`
     case 'python':
-      return {
-        label: 'Create an endpoint',
-        code: `import requests
+      return `import requests
 
 response = requests.post(
     '${apiUrl}/v1/endpoints',
@@ -112,17 +135,14 @@ response = requests.post(
     },
 )
 endpoint = response.json()
-# Save endpoint['id'] — you'll need it to send events`,
-      }
+# Save endpoint['id'] — you'll need it to send events`
   }
 }
 
-function sendEventSnippet(lang: Lang, key: string): { label: string; code: string } {
+function sendEventSnippet(lang: Lang, key: string): string {
   switch (lang) {
     case 'curl':
-      return {
-        label: 'Send an event',
-        code: `curl -X POST ${apiUrl}/v1/events \\
+      return `curl -X POST ${apiUrl}/v1/events \\
   -H "Authorization: Bearer ${key}" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -130,12 +150,9 @@ function sendEventSnippet(lang: Lang, key: string): { label: string; code: strin
     "eventId": "evt_$(date +%s)",
     "eventType": "user.created",
     "payload": {"user_id": 42, "email": "user@example.com"}
-  }'`,
-      }
+  }'`
     case 'node':
-      return {
-        label: 'Send an event',
-        code: `await fetch('${apiUrl}/v1/events', {
+      return `await fetch('${apiUrl}/v1/events', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer ${key}',
@@ -147,12 +164,9 @@ function sendEventSnippet(lang: Lang, key: string): { label: string; code: strin
     eventType: 'user.created',
     payload: { user_id: 42, email: 'user@example.com' },
   }),
-})`,
-      }
+})`
     case 'python':
-      return {
-        label: 'Send an event',
-        code: `import requests
+      return `import requests
 
 response = requests.post(
     '${apiUrl}/v1/events',
@@ -166,8 +180,7 @@ response = requests.post(
         'eventType': 'user.created',
         'payload': {'user_id': 42, 'email': 'user@example.com'},
     },
-)`,
-      }
+)`
   }
 }
 
@@ -273,19 +286,28 @@ export function IntegrationPage() {
   const tenantId = tenant?.id ?? '—'
 
   return (
-    <div className="mx-auto w-full max-w-[900px] px-4 py-6 md:px-6">
-      <div className="flex items-center gap-2 mb-6">
-        <FileCode className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-xl font-semibold text-foreground">Integration Guide</h1>
+    <div className="w-full px-4 py-6 md:px-6 lg:px-8">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 ring-1 ring-foreground/10">
+          <FileCode className="h-5 w-5 text-foreground" />
+        </div>
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Integration Guide</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Everything you need to send events and verify webhooks
+          </p>
+        </div>
       </div>
 
       {!activeKey && (
-        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 mb-6">
-          <p className="text-sm text-amber-600 dark:text-amber-400">
+        <div className="relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-amber-500/10 p-4 mb-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(251,191,36,0.08),transparent_60%)]" />
+          <p className="relative text-sm text-amber-600 dark:text-amber-400">
             Create an API key in{' '}
             <button
               onClick={() => navigate({ to: '/settings' })}
-              className="underline font-medium hover:text-amber-500"
+              className="underline font-medium hover:text-amber-500 transition-colors"
             >
               Settings
             </button>{' '}
@@ -294,117 +316,69 @@ export function IntegrationPage() {
         </div>
       )}
 
-      {/* Credentials */}
-      <div className="rounded-lg border border-border bg-card p-5 mb-6">
-        <h2 className="text-sm font-semibold text-foreground mb-4">Your Credentials</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">API Key</span>
-            <div className="flex items-center gap-2">
-              <code className="text-xs font-mono text-foreground">
-                {keyDisplay ?? <span className="text-muted-foreground">No key yet</span>}
-              </code>
-              {activeKey && (
-                <button
-                  onClick={() => navigator.clipboard.writeText(activeKey.id)}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
+        {/* Main content */}
+        <div className="space-y-8">
+          {/* Sending Events */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+                    <Zap className="h-4 w-4 text-foreground" />
+                  </div>
+                  <h2 className="text-base font-semibold text-foreground">Sending Events</h2>
+                </div>
+                <TabBar selected={lang} onSelect={setLang} />
+              </div>
+              <div className="space-y-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <StepNumber n={1} />
+                    <p className="text-sm font-medium text-foreground">
+                      Create an endpoint to receive webhooks
+                    </p>
+                  </div>
+                  <CodeBlock code={createEndpointSnippet(lang, activeKey?.id ?? 'YOUR_API_KEY')} lang={lang} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <StepNumber n={2} />
+                    <p className="text-sm font-medium text-foreground">
+                      Send events to that endpoint
+                    </p>
+                  </div>
+                  <CodeBlock code={sendEventSnippet(lang, activeKey?.id ?? 'YOUR_API_KEY')} lang={lang} />
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Tenant ID</span>
-            <div className="flex items-center gap-2">
-              <code className="text-xs font-mono text-muted-foreground">{tenantId}</code>
-              <button
-                onClick={() => navigator.clipboard.writeText(tenantId)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Copy className="h-3 w-3" />
-              </button>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">API Base URL</span>
-            <div className="flex items-center gap-2">
-              <code className="text-xs font-mono text-muted-foreground">{apiUrl}</code>
-              <button
-                onClick={() => navigator.clipboard.writeText(apiUrl)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Copy className="h-3 w-3" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Code snippets */}
-      <div className="rounded-lg border border-border bg-card p-5 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-foreground">Sending Events</h2>
-          <TabBar selected={lang} onSelect={setLang} />
-        </div>
-        <div className="space-y-6">
-          <div>
-            <p className="text-xs font-medium text-foreground mb-2">
-              1. Create an endpoint to receive webhooks
-            </p>
-            <CodeBlock code={createEndpointSnippet(lang, activeKey?.id ?? 'YOUR_API_KEY').code} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-foreground mb-2">
-              2. Send events to that endpoint
-            </p>
-            <CodeBlock code={sendEventSnippet(lang, activeKey?.id ?? 'YOUR_API_KEY').code} />
-          </div>
-        </div>
-      </div>
+          {/* Event Reference */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="p-6">
+              <div className="flex items-center gap-2.5 mb-5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+                  <BookOpen className="h-4 w-4 text-foreground" />
+                </div>
+                <h2 className="text-base font-semibold text-foreground">Event Reference</h2>
+              </div>
 
-      {/* Verifying webhooks card */}
-      <div className="rounded-lg border border-border bg-card p-5 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground/5">
-            <Shield className="h-4 w-4 text-foreground" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-foreground">Verifying Webhooks</h3>
-            <p className="text-xs text-muted-foreground">
-              Every webhook payload is signed with HMAC-SHA256 so your customers can verify it came
-              from Relay. We provide ready-to-use verification code.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate({ to: '/integration/verify' })}
-            className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors shrink-0"
-          >
-            View docs
-            <ChevronRight className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
+              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                When an event is delivered, your endpoint receives a <strong className="text-foreground">POST</strong> request with the following format:
+              </p>
 
-      {/* Event Reference */}
-      <div className="rounded-lg border border-border bg-card p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4">Event Reference</h2>
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">
-              When an event is delivered, your endpoint receives a POST request with the following
-              format:
-            </p>
-            <CodeBlock
-              lang="json"
-              code={`Headers:
-  content-type: application/json
-  x-relay-message-id:        uuid
-  x-relay-event-id:          your-event-id
-  x-relay-event-type:        user.created
-  x-relay-signature:         t=...,v1=...
-  x-relay-attempt:           1
-  user-agent:                Relay/1.0
+              <CodeBlock
+                code={`Headers:
+  content-type       application/json
+  x-relay-message-id uuid
+  x-relay-event-id   your-event-id
+  x-relay-event-type user.created
+  x-relay-signature  t=...,v1=...
+  x-relay-attempt    1
+  user-agent         Relay/1.0
 
 Body:
 {
@@ -414,32 +388,116 @@ Body:
   "payload": { "user_id": 42 },
   "created_at": "2026-01-01T00:00:00Z"
 }`}
-            />
+                lang="json"
+              />
+
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <RefreshCw className="h-3.5 w-3.5 text-foreground" />
+                    <span className="text-xs font-semibold text-foreground">Retries</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Up to 8 attempts with exponential backoff + full jitter.
+                    Dead-letter after exhaustion.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Zap className="h-3.5 w-3.5 text-foreground" />
+                    <span className="text-xs font-semibold text-foreground">Timeout</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    10 seconds per attempt. Slow responses are treated as failures.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Key className="h-3.5 w-3.5 text-foreground" />
+                    <span className="text-xs font-semibold text-foreground">Idempotency</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Use <code className="text-foreground font-mono text-[11px]">eventId</code> to prevent duplicates.
+                    Same eventId + endpointId = safe to retry.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 p-3.5">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Shield className="h-3.5 w-3.5 text-foreground" />
+                    <span className="text-xs font-semibold text-foreground">Best practice</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Respond with 2xx as soon as you've queued the event. Don't process synchronously.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-medium text-foreground mb-2">Delivery behavior</p>
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <span className="text-foreground font-mono shrink-0">Retries</span>
-                <span>Up to 3 retries with exponential backoff + full jitter</span>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Credentials */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-4">Your Credentials</h2>
+              <div className="space-y-3.5">
+                <div>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">API Key</span>
+                  <div className="flex items-center justify-between mt-1">
+                    <code className="text-xs font-mono text-foreground truncate">
+                      {keyDisplay ?? <span className="text-muted-foreground">No key yet</span>}
+                    </code>
+                    {activeKey && (
+                      <CopyButton text={activeKey.id} className="ml-2 shrink-0" />
+                    )}
+                  </div>
+                </div>
+                <div className="border-t border-border pt-3">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Tenant ID</span>
+                  <div className="flex items-center justify-between mt-1">
+                    <code className="text-xs font-mono text-muted-foreground truncate">{tenantId}</code>
+                    <CopyButton text={tenantId} className="ml-2 shrink-0" />
+                  </div>
+                </div>
+                <div className="border-t border-border pt-3">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">API Base URL</span>
+                  <div className="flex items-center justify-between mt-1">
+                    <code className="text-xs font-mono text-muted-foreground truncate">{apiUrl}</code>
+                    <CopyButton text={apiUrl} className="ml-2 shrink-0" />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="text-foreground font-mono shrink-0">Timeout</span>
-                <span>10 seconds per attempt. Slow responses are treated as failures</span>
+            </div>
+          </div>
+
+          {/* Verifying Webhooks */}
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden group hover:shadow-md transition-shadow">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/30 via-amber-500/50 to-amber-500/30" />
+            <div className="p-5">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+                  <Shield className="h-4 w-4 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Verifying Webhooks</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    HMAC-SHA256 signed payloads
+                  </p>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="text-foreground font-mono shrink-0">Idempotency</span>
-                <span>
-                  Use eventId to prevent duplicates. Same eventId + endpointId = safe to retry
-                </span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-foreground font-mono shrink-0">Best practice</span>
-                <span>
-                  Respond with 2xx as soon as you've queued the event internally. Don't process
-                  synchronously in the webhook handler
-                </span>
-              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                Every webhook payload is signed so your customers can verify it came from Relayd.
+                We provide ready-to-use verification code in curl, Node.js, and Python.
+              </p>
+              <button
+                onClick={() => navigate({ to: '/integration/verify' })}
+                className="inline-flex items-center justify-center gap-1.5 w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs font-medium text-foreground hover:bg-accent transition-colors group"
+              >
+                View verification docs
+                <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
           </div>
         </div>
