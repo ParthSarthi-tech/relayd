@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Clock, RotateCcw, Trash2 } from 'lucide-react'
+import { ArrowLeft, Clock, Copy, Inbox, ListTree, RotateCcw, Terminal, Timer, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { ConfirmDialog } from '../../components/app/confirm-dialog'
 import { StatusBadge, StatusDot, attemptStatusTone } from '../../components/app/status'
@@ -84,9 +84,14 @@ export function MessageDetailPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold">{message.eventType}</h1>
-            <p className="text-sm text-muted-foreground font-mono">{message.id}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 ring-1 ring-foreground/10">
+              <Inbox className="h-5 w-5 text-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold">{message.eventType}</h1>
+              <p className="text-sm text-muted-foreground font-mono">{message.id}</p>
+            </div>
           </div>
         </div>
         {canReplay && (
@@ -107,9 +112,15 @@ export function MessageDetailPage() {
         transition={{ delay: 0.1 }}
         className="grid gap-6 lg:grid-cols-2"
       >
-        <div className="rounded-xl border border-border bg-card p-5 space-y-3 card-hover">
-          <h3 className="text-sm font-medium text-card-foreground">Details</h3>
-          <div className="space-y-2">
+        <div className="relative rounded-xl border border-border bg-card overflow-hidden p-5 card-hover">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10">
+              <Inbox className="h-3.5 w-3.5 text-foreground" />
+            </div>
+            <h3 className="text-sm font-medium text-card-foreground">Details</h3>
+          </div>
+          <div className="space-y-0">
             <Row label="Event ID" value={message.eventId} mono />
             <Row label="Event Type" value={message.eventType} />
             <Row
@@ -133,9 +144,15 @@ export function MessageDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5 space-y-3 card-hover">
-          <h3 className="text-sm font-medium text-card-foreground">Timeline</h3>
-          <div className="space-y-2">
+        <div className="relative rounded-xl border border-border bg-card overflow-hidden p-5 card-hover">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10">
+              <Timer className="h-3.5 w-3.5 text-foreground" />
+            </div>
+            <h3 className="text-sm font-medium text-card-foreground">Timeline</h3>
+          </div>
+          <div className="space-y-0">
             <Row label="Created" value={new Date(message.createdAt).toLocaleString()} />
             <Row label="Updated" value={new Date(message.updatedAt).toLocaleString()} />
             {message.deliveredAt && (
@@ -152,12 +169,35 @@ export function MessageDetailPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="rounded-xl border border-border bg-card p-5 space-y-3 card-hover"
+        className="relative rounded-xl border border-border bg-card overflow-hidden card-hover"
       >
-        <h3 className="text-sm font-medium text-card-foreground">Payload</h3>
-        <pre className="overflow-x-auto rounded-lg bg-secondary p-4 text-sm font-mono text-foreground">
-          {JSON.stringify(message.payload ?? {}, null, 2)}
-        </pre>
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+        <div className="p-5">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10">
+            <Terminal className="h-3.5 w-3.5 text-foreground" />
+          </div>
+          <h3 className="text-sm font-medium text-card-foreground">Payload</h3>
+        </div>
+        <div className="relative rounded-lg overflow-hidden border border-border">
+          <div className="flex items-center justify-between bg-muted/80 px-3 py-1.5 border-b border-border">
+            <div className="flex gap-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+            </div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(JSON.stringify(message.payload ?? {}, null, 2)); toast('success', 'Payload copied') }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <pre className="bg-muted/30 p-4 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed">
+            {JSON.stringify(message.payload ?? {}, null, 2)}
+          </pre>
+        </div>
+        </div>
       </motion.div>
 
       {attempts && attempts.length > 0 && (
@@ -165,9 +205,15 @@ export function MessageDetailPage() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-xl border border-border bg-card p-5 card-hover"
+          className="relative rounded-xl border border-border bg-card overflow-hidden p-5 card-hover"
         >
-          <h3 className="text-sm font-medium text-card-foreground mb-5">Delivery Attempts</h3>
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10">
+              <ListTree className="h-3.5 w-3.5 text-foreground" />
+            </div>
+            <h3 className="text-sm font-medium text-card-foreground">Delivery Attempts</h3>
+          </div>
           <div className="relative pl-6">
             <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
             {[...attempts].reverse().map((attempt, idx) => {
@@ -242,8 +288,14 @@ export function MessageDetailPage() {
         </motion.div>
       )}
 
-      <div className="rounded-xl border border-red-500/20 bg-card p-5">
-        <h3 className="text-sm font-medium text-red-400 mb-2">Danger Zone</h3>
+      <div className="relative rounded-xl border border-red-500/20 bg-card overflow-hidden p-5">
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-500/30 via-red-500/50 to-red-500/30" />
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/10">
+            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+          </div>
+          <h3 className="text-sm font-medium text-red-400">Danger Zone</h3>
+        </div>
         <p className="text-xs text-muted-foreground mb-3">
           Permanently delete this message and all its delivery attempts.
         </p>
@@ -275,7 +327,7 @@ export function MessageDetailPage() {
 
 function Row({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between py-2.5 border-b border-border/50 last:border-b-0">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
         className={`text-sm text-card-foreground text-right max-w-[60%] break-all ${mono ? 'font-mono' : ''}`}

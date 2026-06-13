@@ -129,8 +129,9 @@ export function EndpointsListPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          className="mt-5 rounded-lg border border-border bg-card p-4 space-y-3"
+          className="relative mt-5 rounded-xl border border-border bg-card overflow-hidden p-4 space-y-3"
         >
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
           <h3 className="text-sm font-semibold text-foreground">New Endpoint</h3>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
@@ -179,27 +180,32 @@ export function EndpointsListPage() {
       )}
 
       {createdSecret && (
-        <div className="mt-5 rounded-lg border border-warning/30 bg-warning/5 p-4">
+        <div className="relative mt-5 rounded-xl border border-warning/30 bg-warning/5 overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-warning/30 via-warning/50 to-warning/30" />
+          <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">Signing Secret</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 This secret is shown once only. Copy it now — you won't be able to see it again.
               </p>
-              <div className="mt-3 flex items-center gap-2">
-                <code className="flex-1 break-all rounded-md border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground select-all">
+              <div className="mt-3 relative rounded-lg overflow-hidden border border-warning/30">
+                <div className="flex items-center justify-between bg-warning/10 px-3 py-1.5 border-b border-warning/30">
+                  <div className="flex gap-1">
+                    <span className="h-2 w-2 rounded-full bg-red-400/70" />
+                    <span className="h-2 w-2 rounded-full bg-amber-400/70" />
+                    <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                  </div>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(createdSecret); toast('success', 'Secret copied') }}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                </div>
+                <pre className="bg-warning/5 p-3 text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed select-all">
                   {createdSecret}
-                </code>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(createdSecret)
-                    toast('success', 'Secret copied to clipboard')
-                  }}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-surface hover:bg-accent"
-                  aria-label="Copy secret"
-                >
-                  <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
+                </pre>
               </div>
             </div>
             <button
@@ -210,6 +216,7 @@ export function EndpointsListPage() {
               <X className="h-4 w-4" />
             </button>
           </div>
+        </div>
         </div>
       )}
 
@@ -229,11 +236,13 @@ export function EndpointsListPage() {
       </div>
 
       {isLoading ? (
-        <div className="mt-3 rounded-lg border border-border bg-card">
+        <div className="mt-3 relative rounded-xl border border-border bg-card overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
           <TableSkeleton rows={5} cols={5} />
         </div>
       ) : (
-        <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
+        <div className="mt-3 relative rounded-xl border border-border bg-card overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface text-[11px] uppercase tracking-wider text-muted-foreground">

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, PlusIcon } from 'lucide-react'
+import { Check, Copy, PlusIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PageHeader } from '../../components/app/page-header'
 import { StatusBadge } from '../../components/app/status'
@@ -115,8 +115,9 @@ export function TransformationsListPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          className="mt-5 rounded-lg border border-border bg-card p-4 space-y-3"
+          className="relative mt-5 rounded-xl border border-border bg-card overflow-hidden p-4 space-y-3"
         >
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
           <h3 className="text-sm font-semibold text-foreground">New Transformation</h3>
           <div className="grid gap-3">
             <input
@@ -162,16 +163,19 @@ export function TransformationsListPage() {
 
       {isLoading ? (
         <div className="mt-10 grid grid-cols-1 gap-3 lg:grid-cols-[240px_1fr_360px]">
-          <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden p-4 space-y-2">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
-          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden p-4 space-y-3">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-48 w-full" />
           </div>
-          <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden p-4 space-y-3">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-32 w-full" />
           </div>
@@ -182,7 +186,8 @@ export function TransformationsListPage() {
         </div>
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-[240px_1fr_360px]">
-          <div className="rounded-lg border border-border bg-card">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             <div className="border-b border-border px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Library
             </div>
@@ -208,12 +213,18 @@ export function TransformationsListPage() {
             </ul>
           </div>
 
-          <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
-            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+          <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="flex items-center justify-between border-b border-border px-4 py-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
+                <div className="flex gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+                </div>
+                <span className="text-xs font-mono font-medium text-muted-foreground ml-1">
                   {selected?.name ?? 'Untitled'}
-                </h3>
+                </span>
                 {isDirty && <span className="h-1.5 w-1.5 rounded-full bg-warning" />}
               </div>
               <div className="flex items-center gap-1">
@@ -241,10 +252,10 @@ export function TransformationsListPage() {
               <textarea
                 value={editCode}
                 onChange={(e) => setEditCode(e.target.value)}
-                className="flex-1 resize-none border-0 bg-surface p-4 font-mono text-[12.5px] leading-relaxed text-foreground focus:outline-none"
+                className="flex-1 resize-none border-0 bg-muted/30 p-4 font-mono text-[12.5px] leading-relaxed text-foreground focus:outline-none"
               />
             ) : (
-              <pre className="flex-1 overflow-auto bg-surface p-4 font-mono text-[12.5px] leading-relaxed text-muted-foreground">
+              <pre className="flex-1 overflow-auto bg-muted/30 p-4 font-mono text-[12.5px] leading-relaxed text-muted-foreground">
                 <code>// Select a transformation</code>
               </pre>
             )}
@@ -258,12 +269,29 @@ export function TransformationsListPage() {
 }
 
 function PreviewBlock({ title, code }: { title: string; code: string }) {
+  const [copied, setCopied] = useState(false)
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="border-b border-border px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {title}
+    <div className="relative overflow-hidden rounded-xl border border-border bg-card">
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+      <div className="flex items-center justify-between bg-muted/80 px-3 py-1.5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+          </div>
+          <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider ml-1">
+            {title}
+          </span>
+        </div>
+        <button
+          onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+        </button>
       </div>
-      <pre className="max-h-[280px] overflow-auto bg-surface p-3 font-mono text-[12px] leading-relaxed text-foreground">
+      <pre className="max-h-[280px] overflow-auto bg-muted/30 p-3 font-mono text-[12px] leading-relaxed text-foreground">
         <code>{code}</code>
       </pre>
     </div>

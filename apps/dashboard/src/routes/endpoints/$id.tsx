@@ -1,7 +1,7 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Key, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Copy, Key, RefreshCw, Webhook } from 'lucide-react'
 import { useState } from 'react'
 import { ConfirmDialog } from '../../components/app/confirm-dialog'
 import { StatusBadge } from '../../components/app/status'
@@ -143,9 +143,14 @@ export function EndpointDetailPage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-semibold">{endpoint.description || endpoint.url}</h1>
-          <p className="text-sm text-muted-foreground font-mono">{endpoint.id}</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 ring-1 ring-foreground/10">
+            <Webhook className="h-5 w-5 text-foreground" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold">{endpoint.description || endpoint.url}</h1>
+            <p className="text-sm text-muted-foreground font-mono">{endpoint.id}</p>
+          </div>
         </div>
       </div>
 
@@ -179,9 +184,15 @@ export function EndpointDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid gap-6 lg:grid-cols-2"
         >
-          <div className="rounded-xl border border-border bg-card p-5 space-y-3 card-hover">
-            <h3 className="text-sm font-medium text-card-foreground">Details</h3>
-            <div className="space-y-2">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden p-5 space-y-3 card-hover">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10">
+                <Webhook className="h-3.5 w-3.5 text-foreground" />
+              </div>
+              <h3 className="text-sm font-medium text-card-foreground">Details</h3>
+            </div>
+            <div className="space-y-0">
               <Row label="URL" value={endpoint.url} mono />
               <Row
                 label="Status"
@@ -200,9 +211,15 @@ export function EndpointDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-5 space-y-3 card-hover">
-            <h3 className="text-sm font-medium text-card-foreground">Rate Limits</h3>
-            <div className="space-y-2">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden p-5 space-y-3 card-hover">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10">
+                <RefreshCw className="h-3.5 w-3.5 text-foreground" />
+              </div>
+              <h3 className="text-sm font-medium text-card-foreground">Rate Limits</h3>
+            </div>
+            <div className="space-y-0">
               <Row
                 label="Per Second"
                 value={endpoint.rateLimitPerSecond?.toString() || 'Default'}
@@ -240,17 +257,36 @@ export function EndpointDetailPage() {
           </div>
 
           {newKeySecret && (
-            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-              <p className="text-xs font-medium text-emerald-400 mb-1">
-                New signing key created — copy it now, it won't be shown again
-              </p>
-              <code className="block rounded bg-background p-2 text-sm font-mono text-foreground break-all">
-                {newKeySecret}
-              </code>
+            <div className="relative rounded-xl border border-emerald-500/20 bg-emerald-500/5 overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/30 via-emerald-500/50 to-emerald-500/30" />
+              <div className="p-4">
+                <p className="text-xs font-medium text-emerald-400 mb-2">
+                  New signing key created — copy it now, it won't be shown again
+                </p>
+                <div className="relative rounded-lg overflow-hidden border border-emerald-500/20">
+                  <div className="flex items-center justify-between bg-emerald-500/10 px-3 py-1.5 border-b border-emerald-500/20">
+                    <div className="flex gap-1">
+                      <span className="h-2 w-2 rounded-full bg-red-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-amber-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                    </div>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(newKeySecret); toast('success', 'Secret copied') }}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <pre className="bg-emerald-500/5 p-3 text-xs font-mono text-emerald-300 overflow-x-auto whitespace-pre-wrap leading-relaxed select-all">
+                    {newKeySecret}
+                  </pre>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-left text-xs font-medium text-muted-foreground">
@@ -305,7 +341,8 @@ export function EndpointDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-lg space-y-4"
         >
-          <div className="rounded-xl border border-border bg-card p-5 card-hover">
+          <div className="relative rounded-xl border border-border bg-card overflow-hidden p-5 card-hover">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             <h3 className="text-sm font-medium text-card-foreground mb-4">Send Test Event</h3>
             <form
               onSubmit={(e) => {
@@ -379,7 +416,8 @@ export function EndpointDetailPage() {
           className="max-w-lg space-y-6"
         >
           {!editForm ? (
-            <div className="rounded-xl border border-border bg-card p-5 card-hover">
+            <div className="relative rounded-xl border border-border bg-card overflow-hidden p-5 card-hover">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-card-foreground">Endpoint Details</h3>
                 <button
@@ -444,7 +482,8 @@ export function EndpointDetailPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-lg border border-border bg-card p-4">
+            <div className="relative rounded-xl border border-border bg-card overflow-hidden p-4">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
               <h3 className="text-sm font-medium text-card-foreground mb-4">Edit Endpoint</h3>
               <form
                 onSubmit={(e) => {
@@ -558,7 +597,8 @@ export function EndpointDetailPage() {
             </div>
           )}
 
-          <div className="rounded-xl border border-red-500/20 bg-card p-5">
+          <div className="relative rounded-xl border border-red-500/20 bg-card overflow-hidden p-5">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-500/30 via-red-500/50 to-red-500/30" />
             <h3 className="text-sm font-medium text-red-400 mb-2">Danger Zone</h3>
             <p className="text-xs text-muted-foreground mb-3">
               Deleting this endpoint will stop all deliveries and permanently remove it.
@@ -603,7 +643,7 @@ export function EndpointDetailPage() {
 
 function Row({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between py-2.5 border-b border-border/50 last:border-b-0">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
         className={`text-sm text-card-foreground text-right max-w-[60%] break-all ${mono ? 'font-mono' : ''}`}
@@ -690,7 +730,8 @@ function BatchReplaySection({
         )}
       </div>
 
-      <div className="rounded-lg border border-border bg-card">
+      <div className="relative rounded-xl border border-border bg-card overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
         {messages.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No messages for this endpoint yet.

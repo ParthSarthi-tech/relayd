@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
+  Activity,
   AlertTriangle,
   ArrowUpRight,
+  BarChart3,
   CheckCircle2,
+  Gauge,
+  Inbox,
   Loader2,
   Plug,
   PlusIcon,
@@ -135,10 +139,12 @@ export function DashboardPage() {
       />
 
       {showQuickStart && (
-        <div className="mt-5 rounded-lg border border-border bg-card p-5">
+        <div className="relative mt-5 rounded-xl border border-border bg-card overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+          <div className="p-5">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground/5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 ring-1 ring-foreground/10">
                 <Sparkles className="h-4 w-4 text-foreground" />
               </div>
               <div>
@@ -228,12 +234,17 @@ export function DashboardPage() {
             </div>
           )}
         </div>
+        </div>
       )}
 
       {stats && stats.deadLetterCount > 0 && (
-        <div className="mt-6 rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+        <div className="relative mt-6 rounded-xl border border-red-500/20 bg-red-500/5 overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-500/30 via-red-500/50 to-red-500/30" />
+          <div className="p-4">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+            </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground">
                 {stats.deadLetterCount} message{stats.deadLetterCount !== 1 ? 's' : ''} in dead-letter
@@ -249,6 +260,7 @@ export function DashboardPage() {
               View messages
             </a>
           </div>
+        </div>
         </div>
       )}
 
@@ -297,6 +309,7 @@ export function DashboardPage() {
               className="lg:col-span-2"
               title="Deliveries"
               subtitle="Successful vs failed over 24h"
+              icon={BarChart3}
             >
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart data={timelineData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
@@ -354,7 +367,7 @@ export function DashboardPage() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Throughput" subtitle="Requests per second">
+            <ChartCard title="Throughput" subtitle="Requests per second" icon={Activity}>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={throughputData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                   <CartesianGrid
@@ -397,13 +410,19 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-            <div className="rounded-lg border border-border bg-card lg:col-span-2">
+            <div className="relative rounded-xl border border-border bg-card overflow-hidden lg:col-span-2">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Recent activity</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Latest events across the workspace
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+                    <Inbox className="h-4 w-4 text-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Recent activity</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Latest events across the workspace
+                    </p>
+                  </div>
                 </div>
               </div>
               <ul className="divide-y divide-border">
@@ -430,9 +449,17 @@ export function DashboardPage() {
               </ul>
             </div>
 
-            <div className="rounded-lg border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-foreground">System status</h3>
-              <p className="text-xs text-muted-foreground">All systems operational</p>
+            <div className="relative rounded-xl border border-border bg-card overflow-hidden p-4">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+                  <Gauge className="h-4 w-4 text-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">System status</h3>
+                  <p className="text-xs text-muted-foreground">All systems operational</p>
+                </div>
+              </div>
               <ul className="mt-4 space-y-3">
                 {[
                   { name: 'Ingestion API', status: 'Operational', tone: 'success' as const },
@@ -475,20 +502,30 @@ export function DashboardPage() {
 function ChartCard({
   title,
   subtitle,
+  icon: Icon,
   children,
   className,
 }: {
   title: string
   subtitle?: string
+  icon?: React.ComponentType<{ className?: string }>
   children: React.ReactNode
   className?: string
 }) {
   return (
-    <div className={`rounded-lg border border-border bg-card ${className ?? ''}`}>
+    <div className={`relative rounded-xl border border-border bg-card overflow-hidden ${className ?? ''}`}>
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
+              <Icon className="h-4 w-4 text-foreground" />
+            </div>
+          )}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+          </div>
         </div>
       </div>
       <div className="p-2 pr-3">{children}</div>
@@ -507,7 +544,7 @@ function ActivityIcon({ kind }: { kind: string }) {
   const entry = map[kind] ?? { Icon: RotateCw, tone: 'text-foreground' }
   const Icon = entry.Icon
   return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-surface">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-foreground/10 to-foreground/5 ring-1 ring-foreground/10">
       <Icon className={`h-3.5 w-3.5 ${entry.tone}`} />
     </div>
   )

@@ -125,8 +125,9 @@ export function ConnectionsListPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          className="mt-5 rounded-lg border border-border bg-card p-4 space-y-3"
+          className="relative mt-5 rounded-xl border border-border bg-card overflow-hidden p-4 space-y-3"
         >
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
           <h3 className="text-sm font-semibold text-foreground">New Connection</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
@@ -229,7 +230,9 @@ export function ConnectionsListPage() {
       {isLoading ? (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
+            <div key={i} className="relative h-36 animate-pulse rounded-xl border border-border bg-card overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
+            </div>
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -243,10 +246,11 @@ export function ConnectionsListPage() {
           {filtered.map((c) => (
             <div
               key={c.id}
-              className="group flex flex-col rounded-lg border border-border bg-card p-4 transition-colors hover:border-border-strong"
+              className="group relative flex flex-col rounded-xl border border-border bg-card overflow-hidden p-4 transition-colors hover:border-border-strong"
             >
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
               <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-surface font-mono text-sm font-semibold text-foreground">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-foreground/10 to-foreground/5 ring-1 ring-foreground/10 font-mono text-sm font-semibold text-foreground">
                   {c.name[0]}
                 </div>
                 {c.enabled ? (

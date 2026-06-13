@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, Copy, Filter, RefreshCw, RotateCcw, Search, Trash2, X } from 'lucide-react'
+import { Check, Copy, Filter, Fingerprint, ListTree, RefreshCw, RotateCcw, Search, Trash2, Webhook, X } from 'lucide-react'
 import { useState } from 'react'
 import { ConfirmDialog } from '../../components/app/confirm-dialog'
 import { PageHeader } from '../../components/app/page-header'
@@ -183,7 +183,8 @@ export function MessagesListPage() {
               )}
             </div>
           </div>
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="relative overflow-hidden rounded-xl border border-border bg-card">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
             {selectedIds.size > 0 && (
               <div className="flex items-center gap-2 border-b border-border bg-surface px-3 py-2">
                 <span className="text-xs font-medium text-foreground">
@@ -363,7 +364,8 @@ function MessagePanel({
   const payloadStr = JSON.stringify(msg.payload ?? {}, null, 2)
 
   return (
-    <div className="sticky top-[72px] flex max-h-[calc(100vh-96px)] flex-col overflow-hidden rounded-lg border border-border bg-card">
+    <div className="sticky top-[72px] flex max-h-[calc(100vh-96px)] flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-foreground/20 via-foreground/40 to-foreground/20" />
       <div className="flex items-start justify-between border-b border-border p-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -384,9 +386,9 @@ function MessagePanel({
       </div>
 
       <div className="grid grid-cols-3 divide-x divide-border border-b border-border text-center text-xs">
-        <Stat label="Endpoint" value={msg.endpointId} />
-        <Stat label="Event ID" value={msg.eventId} />
-        <Stat label="Attempts" value={String(msg.attemptCount)} />
+        <Stat label="Endpoint" value={msg.endpointId} icon={Webhook} />
+        <Stat label="Event ID" value={msg.eventId} icon={Fingerprint} />
+        <Stat label="Attempts" value={String(msg.attemptCount)} icon={RotateCcw} />
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
@@ -403,9 +405,14 @@ function MessagePanel({
         )}
         {msg.attempts && msg.attempts.length > 0 && (
           <div>
-            <h4 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Attempt history
-            </h4>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-foreground/10">
+                <ListTree className="h-3 w-3 text-foreground" />
+              </div>
+              <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Attempt history
+              </h4>
+            </div>
             <ul className="space-y-1.5">
               {msg.attempts.map((a) => (
                 <li
@@ -432,11 +439,14 @@ function MessagePanel({
   )
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, icon: Icon }: { label: string; value: string; icon?: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="px-3 py-3">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 font-mono text-sm tabular-nums text-foreground truncate">{value}</div>
+      <div className="flex items-center justify-center gap-1.5 mb-1">
+        {Icon && <Icon className="h-3 w-3 text-muted-foreground" />}
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      </div>
+      <div className="font-mono text-sm tabular-nums text-foreground truncate text-center">{value}</div>
     </div>
   )
 }
@@ -461,9 +471,18 @@ function CodeBlock({ title, code }: { title: string; code: string }) {
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre className="overflow-x-auto rounded-md border border-border bg-surface p-3 font-mono text-[12px] leading-relaxed text-foreground">
-        <code>{highlight(code)}</code>
-      </pre>
+      <div className="relative rounded-lg overflow-hidden border border-border">
+        <div className="flex items-center justify-between bg-muted/80 px-3 py-1.5 border-b border-border">
+          <div className="flex gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+          </div>
+        </div>
+        <pre className="overflow-x-auto bg-muted/30 p-3 font-mono text-[12px] leading-relaxed text-foreground">
+          <code>{highlight(code)}</code>
+        </pre>
+      </div>
     </div>
   )
 }
