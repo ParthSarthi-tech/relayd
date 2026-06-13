@@ -1,6 +1,13 @@
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
 
+function getAllowedTargets(): string[] {
+  return (process.env.SSRF_ALLOWED_TARGETS || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean)
+}
+
 const PRIVATE_RANGES = [
   { start: ipToBigInt('10.0.0.0'), end: ipToBigInt('10.255.255.255') },
   { start: ipToBigInt('127.0.0.0'), end: ipToBigInt('127.255.255.255') },
@@ -48,7 +55,9 @@ export async function validateUrl(url: string): Promise<void> {
     throw new SSRFError(url, `unexpected protocol ${parsed.protocol}`)
   }
 
-  const hostname = parsed.hostname
+  const hostname = parsed.hostname.toLowerCase()
+
+  if (getAllowedTargets().includes(hostname)) return
 
   if (isIP(hostname)) {
     if (isPrivateIP(hostname)) {
