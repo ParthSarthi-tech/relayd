@@ -1,0 +1,42 @@
+{$DOMAIN:localhost} {
+    # Dashboard SPA
+    handle /app/* {
+        reverse_proxy dashboard:80
+    }
+
+    # API routes
+    handle /auth/* {
+        reverse_proxy api:3000
+    }
+
+    handle /v1/* {
+        reverse_proxy api:3000
+    }
+
+    handle /healthz {
+        reverse_proxy api:3000
+    }
+
+    handle /readyz {
+        reverse_proxy api:3000
+    }
+
+    handle /metrics {
+        reverse_proxy api:3000
+    }
+
+    # Redirect root to dashboard
+    redir / /app/ 308
+
+    # Catch-all
+    handle {
+        respond "Relay Webhook Infrastructure" 200
+    }
+
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

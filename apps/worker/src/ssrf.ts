@@ -55,7 +55,7 @@ export async function validateUrl(url: string): Promise<void> {
     throw new SSRFError(url, `unexpected protocol ${parsed.protocol}`)
   }
 
-  const hostname = parsed.hostname.toLowerCase()
+  const hostname = parsed.hostname.replace(/^\[(.+)\]$/, '$1').toLowerCase()
 
   if (getAllowedTargets().includes(hostname)) return
 

@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { processDelivery } from '../src/dispatcher.js'
+import { getConnection } from '../src/queue.js'
 
 const messageId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
 const endpointId = 'ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj'
@@ -282,5 +283,231 @@ describe('processDelivery', () => {
     expect(callHeaders['x-relay-signature']).toContain('kid=v1')
     expect(callHeaders['x-relay-message-id']).toBe(messageId)
     expect(callHeaders['x-relay-attempt']).toBe('1')
+  })
+
+  it('propagates requestId in x-relay-request-id header', async () => {
+    const db = createMockDb()
+    db._selectResults.mockResolvedValueOnce([
+      { message: mockMessage, endpoint: mockEndpoint, signingKey: mockSigningKey },
+    ])
+    mockFetch.mockResolvedValueOnce(okResponse())
+    const job = { id: 'job-1', data: { messageId, requestId: 'req-abc-123' }, attemptsMade: 0 }
+
+    await processDelivery(job as any, { db: db as any, log: createMockLogger() as any })
+
+    const callHeaders = (mockFetch.mock.calls[0][1] as any).headers
+    expect(callHeaders['x-relay-request-id']).toBe('req-abc-123')
+  })
+
+  describe('rate limiting', () => {
+    it('re-queues when per-second rate limit exceeded', async () => {
+      const savedImpl = vi.mocked(getConnection).getMockImplementation()
+      try {
+        const customRedis = {
+          quit: vi.fn().mockResolvedValue(undefined),
+          status: 'ready',
+          get: vi.fn().mockResolvedValue(null),
+          set: vi.fn().mockResolvedValue('OK'),
+          del: vi.fn().mockResolvedValue(1),
+          incr: vi.fn().mockResolvedValue(1),
+          expire: vi.fn().mockResolvedValue(1),
+          eval: vi.fn().mockResolvedValue(999),
+        }
+        vi.mocked(getConnection).mockImplementation(() => customRedis as any)
+
+        const db = createMockDb()
+        db._selectResults.mockResolvedValueOnce([
+          { message: mockMessage, endpoint: mockEndpoint, signingKey: mockSigningKey },
+        ])
+
+        await processDelivery(mockJob as any, { db: db as any, log: createMockLogger() as any })
+
+        expect(mockFetch).not.toHaveBeenCalled()
+        expect(retryQueueAdd).toHaveBeenCalled()
+      } finally {
+        vi.mocked(getConnection).mockImplementation(savedImpl!)
+      }
+    })
+
+    it('re-queues when burst rate limit exceeded', async () => {
+      const savedImpl = vi.mocked(getConnection).getMockImplementation()
+      try {
+        let evalCallCount = 0
+        const customRedis = {
+          quit: vi.fn().mockResolvedValue(undefined),
+          status: 'ready',
+          get: vi.fn().mockResolvedValue(null),
+          set: vi.fn().mockResolvedValue('OK'),
+          del: vi.fn().mockResolvedValue(1),
+          incr: vi.fn().mockResolvedValue(1),
+          expire: vi.fn().mockResolvedValue(1),
+          eval: vi.fn().mockImplementation(() => {
+            evalCallCount++
+            if (evalCallCount === 1) return 50
+            return 999
+          }),
+        }
+        vi.mocked(getConnection).mockImplementation(() => customRedis as any)
+
+        const db = createMockDb()
+        db._selectResults.mockResolvedValueOnce([
+          { message: mockMessage, endpoint: mockEndpoint, signingKey: mockSigningKey },
+        ])
+
+        await processDelivery(mockJob as any, { db: db as any, log: createMockLogger() as any })
+
+        expect(mockFetch).not.toHaveBeenCalled()
+        expect(retryQueueAdd).toHaveBeenCalled()
+      } finally {
+        vi.mocked(getConnection).mockImplementation(savedImpl!)
+      }
+    })
+  })
+
+  describe('circuit breaker probes', () => {
+    it('half-open probe succeeds and closes the circuit', async () => {
+      const savedImpl = vi.mocked(getConnection).getMockImplementation()
+      try {
+        const store: Record<string, string> = {}
+        const customRedis = {
+          quit: vi.fn().mockResolvedValue(undefined),
+          status: 'ready',
+          get: vi.fn(async (key: string) => store[key] ?? null),
+          set: vi.fn(async (key: string, ...args: string[]) => {
+            store[key] = args[0] ?? '1'
+            return 'OK'
+          }),
+          del: vi.fn(async (key: string) => {
+            delete store[key]
+            return 1
+          }),
+          incr: vi.fn(async (key: string) => {
+            const next = (Number(store[key] ?? 0) + 1).toString()
+            store[key] = next
+            return Number(next)
+          }),
+          expire: vi.fn().mockResolvedValue(1),
+          eval: vi.fn().mockResolvedValue(1),
+        }
+        vi.mocked(getConnection).mockImplementation(() => customRedis as any)
+
+        const db = createMockDb()
+        db._selectResults.mockResolvedValueOnce([
+          {
+            message: mockMessage,
+            endpoint: { ...mockEndpoint, status: 'paused' },
+            signingKey: mockSigningKey,
+          },
+        ])
+        mockFetch.mockResolvedValueOnce(okResponse())
+
+        await processDelivery(mockJob as any, { db: db as any, log: createMockLogger() as any })
+
+        expect(mockFetch).toHaveBeenCalled()
+        expect(db.update).toHaveBeenCalled()
+        expect(customRedis.del).toHaveBeenCalledWith(`circuit:endpoint:${endpointId}`)
+        expect(customRedis.del).toHaveBeenCalledWith(`probe:circuit:endpoint:${endpointId}`)
+      } finally {
+        vi.mocked(getConnection).mockImplementation(savedImpl!)
+      }
+    })
+
+    it('half-open probe fails and re-opens the circuit', async () => {
+      const savedImpl = vi.mocked(getConnection).getMockImplementation()
+      try {
+        const store: Record<string, string> = {}
+        const customRedis = {
+          quit: vi.fn().mockResolvedValue(undefined),
+          status: 'ready',
+          get: vi.fn(async (key: string) => store[key] ?? null),
+          set: vi.fn(async (key: string, ...args: string[]) => {
+            store[key] = args[0] ?? '1'
+            return 'OK'
+          }),
+          del: vi.fn(async (key: string) => {
+            delete store[key]
+            return 1
+          }),
+          incr: vi.fn(async (key: string) => {
+            const next = (Number(store[key] ?? 0) + 1).toString()
+            store[key] = next
+            return Number(next)
+          }),
+          expire: vi.fn().mockResolvedValue(1),
+          eval: vi.fn().mockResolvedValue(1),
+        }
+        vi.mocked(getConnection).mockImplementation(() => customRedis as any)
+
+        const db = createMockDb()
+        const probeMessage = { ...mockMessage, attemptCount: 2 }
+        db._selectResults.mockResolvedValueOnce([
+          {
+            message: probeMessage,
+            endpoint: { ...mockEndpoint, status: 'paused' },
+            signingKey: mockSigningKey,
+          },
+        ])
+        mockFetch.mockResolvedValueOnce(okResponse({ ok: false, status: 502 }))
+        const job = { ...mockJob, attemptsMade: 2 }
+
+        await processDelivery(job as any, { db: db as any, log: createMockLogger() as any })
+
+        expect(customRedis.set).toHaveBeenCalledWith(
+          `circuit:endpoint:${endpointId}`,
+          '1',
+          'EX',
+          expect.any(Number),
+        )
+        expect(customRedis.del).toHaveBeenCalledWith(`probe:circuit:endpoint:${endpointId}`)
+      } finally {
+        vi.mocked(getConnection).mockImplementation(savedImpl!)
+      }
+    })
+  })
+
+  describe('dead-letter', () => {
+    it('fires dead-letter webhook URL when configured', async () => {
+      const db = createMockDb()
+      const dlMessage = { ...mockMessage, attemptCount: 2 }
+      db._selectResults.mockResolvedValueOnce([
+        {
+          message: dlMessage,
+          endpoint: {
+            ...mockEndpoint,
+            deadLetterWebhookUrl: 'https://hooks.slack.com/services/xxx',
+          },
+          signingKey: mockSigningKey,
+        },
+      ])
+      mockFetch.mockResolvedValueOnce(okResponse({ ok: false, status: 500 }))
+      const job = { ...mockJob, attemptsMade: 2 }
+
+      await processDelivery(job as any, { db: db as any, log: createMockLogger() as any })
+
+      // Drain microtask queue so the fire-and-forget DL webhook IIFE executes
+      await new Promise<void>((resolve) => resolve())
+
+      const deadLetterCall = mockFetch.mock.calls.find(
+        (call: any) => call[0] === 'https://hooks.slack.com/services/xxx',
+      )
+      expect(deadLetterCall).toBeDefined()
+      expect(deadLetterCall[1].method).toBe('POST')
+    })
+
+    it('schedules retry with delay on non-final failure', async () => {
+      const db = createMockDb()
+      db._selectResults.mockResolvedValueOnce([
+        { message: mockMessage, endpoint: mockEndpoint, signingKey: mockSigningKey },
+      ])
+      mockFetch.mockResolvedValueOnce(okResponse({ ok: false, status: 500 }))
+
+      await processDelivery(mockJob as any, { db: db as any, log: createMockLogger() as any })
+
+      expect(retryQueueAdd).toHaveBeenCalledWith(
+        'deliver',
+        expect.objectContaining({ messageId }),
+        expect.objectContaining({ delay: expect.any(Number) }),
+      )
+    })
   })
 })
