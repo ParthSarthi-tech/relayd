@@ -34,6 +34,8 @@ CMD ["node", "--enable-source-maps", "apps/worker/dist/index.js"]
 
 # --- Dashboard ---
 FROM node:22-alpine AS dashboard-build
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
