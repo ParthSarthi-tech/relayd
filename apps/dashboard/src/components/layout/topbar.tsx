@@ -56,8 +56,9 @@ export function Topbar({ onOpenCommandPalette, liveStatus }: TopbarProps) {
   }, [onOpenCommandPalette])
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
+      {/* Mobile: workspace on left */}
+      <div className="flex lg:hidden">
         <button className="flex h-8 items-center gap-2 rounded-md border border-border bg-surface px-2.5 text-sm font-medium text-foreground hover:bg-accent">
           <div className="flex h-5 w-5 items-center justify-center rounded bg-foreground text-[10px] font-semibold text-background">
             {user?.name?.charAt(0).toUpperCase() || 'A'}
@@ -65,34 +66,47 @@ export function Topbar({ onOpenCommandPalette, liveStatus }: TopbarProps) {
           <span className="hidden sm:inline">{user?.name || 'Workspace'}</span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
-
-        <button
-          onClick={onOpenCommandPalette}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          className="relative hidden flex-1 max-w-md lg:block"
-        >
-          <div
-            className={`flex h-8 w-full items-center rounded-md border pl-8 pr-12 text-sm transition-colors ${
-              focused
-                ? 'border-border-strong bg-surface text-foreground'
-                : 'border-border bg-surface text-muted-foreground'
-            }`}
-          >
-            <Search
-              className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-colors ${
-                focused ? 'text-foreground' : 'text-muted-foreground'
-              }`}
-            />
-            <span className="text-muted-foreground">Search endpoints, messages...</span>
-          </div>
-          <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            ⌘K
-          </kbd>
-        </button>
       </div>
 
+      {/* Desktop spacer */}
+      <div className="hidden flex-1 lg:block" />
+
+      {/* Search bar — centered */}
+      <button
+        onClick={onOpenCommandPalette}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        className="relative hidden w-full max-w-md lg:block"
+      >
+        <div
+          className={`flex h-8 w-full items-center rounded-md border pl-8 pr-12 text-sm transition-colors ${
+            focused
+              ? 'border-border-strong bg-surface text-foreground'
+              : 'border-border bg-surface text-muted-foreground'
+          }`}
+        >
+          <Search
+            className={`absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-colors ${
+              focused ? 'text-foreground' : 'text-muted-foreground'
+            }`}
+          />
+          <span className="text-muted-foreground">Search endpoints, messages...</span>
+        </div>
+        <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          ⌘K
+        </kbd>
+      </button>
+
+      {/* Right side: workspace + actions */}
       <div className="flex items-center gap-1">
+        {/* Desktop workspace button */}
+        <button className="hidden h-8 items-center gap-2 rounded-md border border-border bg-surface px-2.5 text-sm font-medium text-foreground hover:bg-accent lg:flex">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-foreground text-[10px] font-semibold text-background">
+            {user?.name?.charAt(0).toUpperCase() || 'A'}
+          </div>
+          <span className="hidden sm:inline">{user?.name || 'Workspace'}</span>
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
         {liveStatus && (
           <div
             className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider ${
