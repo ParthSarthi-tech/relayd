@@ -21,7 +21,7 @@ FROM node:22-alpine AS api
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=base /app .
-RUN pnpm add -g tsx
+RUN npm install -g tsx
 EXPOSE 3000
 CMD ["tsx", "apps/api/src/index.ts"]
 
@@ -30,7 +30,7 @@ FROM node:22-alpine AS worker
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=base /app .
-RUN pnpm add -g tsx
+RUN npm install -g tsx
 EXPOSE 3002
 CMD ["tsx", "apps/worker/src/index.ts"]
 
