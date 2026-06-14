@@ -16,31 +16,48 @@ jobs:
   validate:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: relay
-          POSTGRES_PASSWORD: relay
-          POSTGRES_DB: relay_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
+
+      - name: Start Postgres
+        run: |
+          for i in 1 2 3; do
+            docker run -d \
+              --name postgres \
+              -e POSTGRES_USER=relay \
+              -e POSTGRES_PASSWORD=relay \
+              -e POSTGRES_DB=relay_test \
+              -p 5432:5432 \
+              docker.io/library/postgres:16-alpine \
+              -c 'max_connections=200' && break
+            echo "Postgres pull/start failed (attempt $i/3), waiting 5s..."
+            sleep 5
+          done
+          for i in $(seq 1 30); do
+            if docker exec postgres pg_isready -q 2>/dev/null; then
+              echo "Postgres is ready"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start Redis
+        run: |
+          for i in 1 2 3; do
+            docker run -d \
+              --name redis \
+              -p 6379:6379 \
+              docker.io/library/redis:7-alpine && break
+            echo "Redis pull/start failed (attempt $i/3), waiting 5s..."
+            sleep 5
+          done
+          for i in $(seq 1 30); do
+            if docker exec redis redis-cli ping 2>/dev/null | grep -q PONG; then
+              echo "Redis is ready"
+              break
+            fi
+            sleep 1
+          done
+
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
