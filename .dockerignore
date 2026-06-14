@@ -7,4 +7,4 @@ coverage
 *.md
 session-*
 k6
-docker
+
