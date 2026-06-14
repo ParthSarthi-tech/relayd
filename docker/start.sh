@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+echo "[start] Running database migrations..."
+node --import tsx packages/db/src/migrate.ts
+echo "[start] Migrations complete."
+
 echo "[start] Starting Relay services..."
 
 tsx apps/worker/src/index.ts &
