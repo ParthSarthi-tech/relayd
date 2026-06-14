@@ -3,8 +3,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
-COPY packages/config/package.json packages/config/
-COPY packages/db/package.json packages/db/
+COPY packages/config/package.json packages/config/tsconfig.json packages/config/
+COPY packages/db/package.json packages/db/tsconfig.json packages/db/
 COPY apps/api/package.json apps/api/
 COPY apps/worker/package.json apps/worker/
 RUN pnpm install --frozen-lockfile
@@ -39,8 +39,8 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
-COPY packages/config/package.json packages/config/
-COPY packages/db/package.json packages/db/
+COPY packages/config/package.json packages/config/tsconfig.json packages/config/
+COPY packages/db/package.json packages/db/tsconfig.json packages/db/
 COPY apps/dashboard/package.json apps/dashboard/
 RUN pnpm install --frozen-lockfile
 COPY packages/config/src packages/config/src
