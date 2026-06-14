@@ -2,7 +2,7 @@
 set -e
 
 echo "[start] Running database migrations..."
-tsx packages/db/src/migrate.ts
+cd packages/db && tsx src/migrate.ts && cd /app
 echo "[start] Migrations complete."
 
 echo "[start] Starting Relay services..."
