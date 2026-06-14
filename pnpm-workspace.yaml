@@ -1,7 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "Landing page"
+  - "landing-page"
 
 allowBuilds:
   '@biomejs/biome': true

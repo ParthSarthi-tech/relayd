@@ -84,7 +84,7 @@ export function createApp(deps: AppDeps) {
       rewriteRequestPath: (path) => path.replace(/^\/app/, ''),
     }))
     .use('*', serveStatic({
-      root: '/app/Landing page/out',
+      root: '/app/landing-page/out',
       index: 'index.html',
     }))
     .use('/app/*', async (c) => {

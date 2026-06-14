@@ -15,7 +15,7 @@
       "**/migrations/**",
       "**/.next/**",
       "**/LOVABLE/**",
-      "**/Landing page/**"
+      "**/landing-page/**"
     ]
   },
   "formatter": {

@@ -8,7 +8,7 @@ COPY packages/db/package.json packages/db/tsconfig.json packages/db/
 COPY apps/api/package.json apps/api/tsconfig.json apps/api/
 COPY apps/worker/package.json apps/worker/tsconfig.json apps/worker/
 COPY apps/dashboard/package.json apps/dashboard/
-COPY "Landing page/package.json" "Landing page/"
+COPY landing-page/package.json landing-page/
 RUN pnpm install --frozen-lockfile
 
 COPY packages/config/src packages/config/src
@@ -16,7 +16,7 @@ COPY packages/db/src packages/db/src
 COPY apps/api/src apps/api/src
 COPY apps/worker/src apps/worker/src
 COPY apps/dashboard/ apps/dashboard/
-COPY "Landing page/" "Landing page/"
+COPY landing-page/ landing-page/
 RUN pnpm build
 
 FROM node:22-alpine
