@@ -160,7 +160,7 @@ export function RegisterPage() {
           transition={{ duration: 0.8, delay: 0.8 }}
           className="relative z-10 text-sm text-zinc-600"
         >
-          &copy; {new Date().getFullYear()} Relay. All rights reserved.
+          &copy; {new Date().getFullYear()} Relay. Made by Parth Sarthi with passion.
         </motion.div>
       </div>
 

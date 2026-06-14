@@ -134,6 +134,9 @@ function AuthLayout() {
               </ErrorBoundary>
             </div>
           </main>
+          <footer className="border-t border-border px-6 py-3 text-xs text-muted-foreground text-center">
+            &copy; {new Date().getFullYear()} Relay. Made by Parth Sarthi with passion.
+          </footer>
         </div>
         <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
         <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />

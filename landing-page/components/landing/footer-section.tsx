@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
 import { DASHBOARD_URL } from "@/lib/config";
 import { AnimatedWave } from "./animated-wave";
 
@@ -14,28 +13,15 @@ const footerLinks = {
   ],
   Developers: [
     { name: "Documentation", href: "#developers" },
-    { name: "API Reference", href: "#" },
-    { name: "SDK", href: "#developers" },
-    { name: "Status", href: "#" },
-  ],
-  Company: [
-    { name: "About", href: "#" },
-    { name: "Blog", href: "#" },
-    { name: "Careers", href: "#", badge: "Hiring" },
-    { name: "Contact", href: "#" },
+    { name: "SDK & Examples", href: "#developers" },
   ],
   Legal: [
-    { name: "Privacy", href: "#" },
-    { name: "Terms", href: "#" },
+    { name: "Privacy", href: "/privacy" },
+    { name: "Terms", href: "/terms" },
+    { name: "Legal", href: "/legal" },
     { name: "Security", href: "#security" },
   ],
 };
-
-const socialLinks = [
-  { name: "Twitter", href: "#" },
-  { name: "GitHub", href: "#" },
-  { name: "LinkedIn", href: "#" },
-];
 
 export function FooterSection() {
   return (
@@ -59,20 +45,6 @@ export function FooterSection() {
               <p className="text-muted-foreground leading-relaxed mb-8 max-w-xs">
                 The webhook delivery infrastructure for teams who ship. Reliable, secure, and built for scale.
               </p>
-
-              {/* Social Links */}
-              <div className="flex gap-6">
-                {socialLinks.map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 group"
-                  >
-                    {link.name}
-                    <ArrowUpRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                  </a>
-                ))}
-              </div>
             </div>
 
             {/* Link Columns */}
@@ -105,7 +77,7 @@ export function FooterSection() {
         {/* Bottom Bar */}
         <div className="py-8 border-t border-foreground/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            2025 Relay. All rights reserved.
+            {new Date().getFullYear()} Relay. Made by Parth Sarthi with passion.
           </p>
 
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
