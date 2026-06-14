@@ -48,20 +48,57 @@ COPY packages/db/src packages/db/src
 COPY apps/dashboard/ apps/dashboard/
 RUN pnpm build --filter @relay/dashboard
 
+# --- Landing page ---
+FROM node:22-alpine AS landing-build
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json tsconfig.base.json ./
+COPY "Landing page/package.json" "Landing page/"
+RUN pnpm install --frozen-lockfile --filter @relay/landing
+COPY "Landing page/" "Landing page/"
+RUN cd "Landing page" && pnpm build
+
 FROM nginx:alpine AS dashboard
 COPY --from=dashboard-build /app/apps/dashboard/dist /usr/share/nginx/html
-RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
+COPY --from=landing-build /app/Landing\ page/out /usr/share/nginx/landing
+RUN cat > /etc/nginx/templates/default.conf.template << 'EOF'
 server {
     listen 80;
     server_name _;
-    root /usr/share/nginx/html;
+
+    # Landing page at root
+    root /usr/share/nginx/landing;
     index index.html;
+
+    # Dashboard SPA at /app/
     location /app/ {
         alias /usr/share/nginx/html/;
         try_files $uri $uri/ /app/index.html;
     }
+
+    # API proxy — API_UPSTREAM is substituted at container start
+    location /auth/ {
+        proxy_pass http://${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /v1/ {
+        proxy_pass http://${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
     location /healthz {
-        return 200 "OK";
+        proxy_pass http://${API_UPSTREAM};
+    }
+
+    location /readyz {
+        proxy_pass http://${API_UPSTREAM};
+    }
+
+    location /metrics {
+        proxy_pass http://${API_UPSTREAM};
     }
 }
 EOF

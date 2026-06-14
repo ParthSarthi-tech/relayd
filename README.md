@@ -171,6 +171,8 @@ When a message dead-letters, the worker POSTs a JSON payload to `dead_letter_web
 
 Relayd can be deployed on [Render](https://render.com) using Docker. You'll also need a free [Redis Cloud](https://redis.com/try-free) instance for the queue.
 
+The dashboard service serves the marketing landing page at `/`, the dashboard SPA at `/app/`, and proxies API requests to the backend — all from a single nginx container.
+
 #### 1. Create Redis
 
 Sign up at [Redis Cloud](https://redis.com/try-free) (no credit card required) and create a free 30MB database. Copy the `REDIS_URL` connection string.
@@ -181,7 +183,7 @@ In the Render dashboard, go to **New → PostgresSQL**. Copy the `DATABASE_URL`.
 
 #### 3. Deploy the services
 
-Create three services from the same GitHub repo, each with a different Docker build target:
+Create three services from the same GitHub repo. **Important:** name the API service `relay-api` exactly (the dashboard nginx uses this name to proxy requests).
 
 | Service | Render Type | Docker Target | Port |
 |---------|------------|---------------|------|
@@ -204,20 +206,24 @@ For each service, set **Dockerfile Path** to `docker/Dockerfile` and **Build Tar
 | `LOG_LEVEL` | `info` |
 | `API_BASE_URL` | `https://relay-api.onrender.com` |
 
-**Dashboard:**
+**Dashboard (runtime env):**
 
 | Variable | Value |
 |----------|-------|
-| `VITE_API_URL` | `https://relay-api.onrender.com` |
+| `API_UPSTREAM` | `relay-api:3000` |
 
-> `VITE_API_URL` must be set **at build time**. Go to the dashboard service's **Environment** tab → **Build-time variables** and add it there.
+The dashboard nginx uses `API_UPSTREAM` to proxy API calls to the backend service.
 
 #### 5. Run migrations
 
-Render's **Shell** tab for the API service:
+In the Render dashboard, go to `relay-api` → **Shell** tab:
 ```bash
 pnpm --filter @relay/db migrate
 ```
+
+#### 6. Visit your site
+
+Go to `https://relay-dashboard.onrender.com` — you'll see the landing page. Click **Get Started** to register and access the dashboard.
 
 ## License
 
