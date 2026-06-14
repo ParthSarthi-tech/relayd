@@ -185,13 +185,13 @@ In the Render dashboard, go to **New → PostgresSQL**. Copy the `DATABASE_URL`.
 
 Create three services from the same GitHub repo. **Important:** name the API service `relay-api` exactly (the dashboard nginx uses this name to proxy requests).
 
-| Service | Render Type | Docker Target | Port |
-|---------|------------|---------------|------|
-| `relay-api` | Web Service | `api` | 3000 |
-| `relay-worker` | Background Worker | `worker` | — |
-| `relay-dashboard` | Web Service | `dashboard` | 80 |
+| Service | Render Type | Dockerfile Path |
+|---------|------------|-----------------|
+| `relay-api` | Web Service | `docker/Dockerfile.api` |
+| `relay-worker` | Background Worker | `docker/Dockerfile.worker` |
+| `relay-dashboard` | Web Service | `docker/Dockerfile.dashboard` |
 
-For each service, set **Dockerfile Path** to `docker/Dockerfile` and **Build Target** to the target above.
+No **Docker Build Target** needed — each file builds just one service.
 
 #### 4. Set environment variables
 
