@@ -3,6 +3,8 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger as honoLogger } from 'hono/logger'
 import { requestId } from 'hono/request-id'
+import { serveStatic } from '@hono/node-server/serve-static'
+import { readFileSync } from 'fs'
 import type { Database } from './lib/db.js'
 import type { Logger } from './lib/logger.js'
 import { metricsHandler } from './lib/metrics.js'
@@ -77,5 +79,19 @@ export function createApp(deps: AppDeps) {
     .route('/v1/messages', messageRoutes(db, queues))
     .route('/v1/events', eventRoutes(db, queues))
     .route('/v1/stream', streamRoutes({ db, queues }))
+    .use('/app/*', serveStatic({
+      root: '/app/apps/dashboard/dist',
+      rewriteRequestPath: (path) => path.replace(/^\/app/, ''),
+    }))
+    .use('*', serveStatic({
+      root: '/app/Landing page/out',
+      index: 'index.html',
+    }))
+    .use('/app/*', async (c) => {
+      return c.html(readFileSync('/app/apps/dashboard/dist/index.html', 'utf-8'))
+    })
+    .use('*', async (c) => {
+      return c.json({ error: { code: 'not_found', message: 'Not found' } }, 404)
+    })
     .onError(errorHandler(log))
 }
