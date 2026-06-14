@@ -13,6 +13,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY packages/config/src packages/config/src
 COPY packages/db/src packages/db/src
+COPY packages/db/migrations packages/db/migrations
 COPY apps/api/src apps/api/src
 COPY apps/worker/src apps/worker/src
 COPY apps/dashboard/ apps/dashboard/
