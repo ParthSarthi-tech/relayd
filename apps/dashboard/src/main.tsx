@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
+import { ColdStartBanner } from './components/cold-start-banner'
 import { ThemeProvider } from './components/layout/theme-provider'
 import { ToastProvider } from './components/toast'
 import { createRouterInstance } from './routes/index'
@@ -25,6 +26,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <ThemeProvider>
+        <ColdStartBanner />
         <ToastProvider>
           <QueryClientProvider client={queryClient}>
             <RouterProvider router={router} />

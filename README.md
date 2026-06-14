@@ -165,6 +165,60 @@ When a message dead-letters, the worker POSTs a JSON payload to `dead_letter_web
 }
 ```
 
+### Render deployment
+
+> **Note:** This is a free-tier deployment. Services sleep after 15 minutes of inactivity — the first request may take ~30s to wake up.
+
+Relayd can be deployed on [Render](https://render.com) using Docker. You'll also need a free [Redis Cloud](https://redis.com/try-free) instance for the queue.
+
+#### 1. Create Redis
+
+Sign up at [Redis Cloud](https://redis.com/try-free) (no credit card required) and create a free 30MB database. Copy the `REDIS_URL` connection string.
+
+#### 2. Create a Postgres database
+
+In the Render dashboard, go to **New → PostgresSQL**. Copy the `DATABASE_URL`.
+
+#### 3. Deploy the services
+
+Create three services from the same GitHub repo, each with a different Docker build target:
+
+| Service | Render Type | Docker Target | Port |
+|---------|------------|---------------|------|
+| `relay-api` | Web Service | `api` | 3000 |
+| `relay-worker` | Background Worker | `worker` | — |
+| `relay-dashboard` | Web Service | `dashboard` | 80 |
+
+For each service, set **Dockerfile Path** to `docker/Dockerfile` and **Build Target** to the target above.
+
+#### 4. Set environment variables
+
+**API + Worker:**
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | *(from Render Postgres)* |
+| `REDIS_URL` | *(from Redis Cloud)* |
+| `JWT_SECRET` | `openssl rand -base64 32` |
+| `NODE_ENV` | `production` |
+| `LOG_LEVEL` | `info` |
+| `API_BASE_URL` | `https://relay-api.onrender.com` |
+
+**Dashboard:**
+
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | `https://relay-api.onrender.com` |
+
+> `VITE_API_URL` must be set **at build time**. Go to the dashboard service's **Environment** tab → **Build-time variables** and add it there.
+
+#### 5. Run migrations
+
+Render's **Shell** tab for the API service:
+```bash
+pnpm --filter @relay/db migrate
+```
+
 ## License
 
 MIT © ParthSarthi
