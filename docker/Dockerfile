@@ -50,5 +50,19 @@ RUN pnpm build --filter @relay/dashboard
 
 FROM nginx:alpine AS dashboard
 COPY --from=dashboard-build /app/apps/dashboard/dist /usr/share/nginx/html
-RUN echo 'server { listen 80; server_name _; root /usr/share/nginx/html; index index.html; location /app/ { alias /usr/share/nginx/html/; try_files $$uri $$uri/ /app/index.html; } location /healthz { return 200 "OK"; } }' > /etc/nginx/conf.d/default.conf
+RUN cat > /etc/nginx/conf.d/default.conf << 'EOF'
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    location /app/ {
+        alias /usr/share/nginx/html/;
+        try_files $uri $uri/ /app/index.html;
+    }
+    location /healthz {
+        return 200 "OK";
+    }
+}
+EOF
 EXPOSE 80
