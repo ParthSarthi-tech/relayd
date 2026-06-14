@@ -21,16 +21,18 @@ FROM node:22-alpine AS api
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=base /app .
+RUN pnpm add -g tsx
 EXPOSE 3000
-CMD ["node", "--enable-source-maps", "apps/api/dist/index.js"]
+CMD ["tsx", "apps/api/src/index.ts"]
 
 # --- Worker ---
 FROM node:22-alpine AS worker
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=base /app .
+RUN pnpm add -g tsx
 EXPOSE 3002
-CMD ["node", "--enable-source-maps", "apps/worker/dist/index.js"]
+CMD ["tsx", "apps/worker/src/index.ts"]
 
 # --- Dashboard ---
 FROM node:22-alpine AS dashboard-build

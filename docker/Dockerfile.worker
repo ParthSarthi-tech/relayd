@@ -20,5 +20,6 @@ FROM node:22-alpine AS worker
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 COPY --from=base /app .
+RUN pnpm add -g tsx
 EXPOSE 3002
-CMD ["node", "--enable-source-maps", "apps/worker/dist/index.js"]
+CMD ["tsx", "apps/worker/src/index.ts"]
