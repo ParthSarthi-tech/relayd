@@ -3,7 +3,14 @@
 import { DASHBOARD_URL } from "@/lib/config";
 import { AnimatedWave } from "./animated-wave";
 
-const footerLinks = {
+interface FooterLink {
+  name: string
+  href: string
+  external?: boolean
+  badge?: string
+}
+
+const footerLinks: Record<string, FooterLink[]> = {
   Product: [
     { name: "Features", href: "#features" },
     { name: "How it works", href: "#how-it-works" },
